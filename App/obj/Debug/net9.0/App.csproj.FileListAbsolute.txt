@@ -140,3 +140,4 @@ M:\Personal Expense Tracker\App\obj\Debug\net9.0\refint\App.dll
 M:\Personal Expense Tracker\App\obj\Debug\net9.0\App.pdb
 M:\Personal Expense Tracker\App\obj\Debug\net9.0\App.genruntimeconfig.cache
 M:\Personal Expense Tracker\App\obj\Debug\net9.0\ref\App.dll
+M:\Personal Expense Tracker\App\obj\Debug\net9.0\App.sourcelink.json
