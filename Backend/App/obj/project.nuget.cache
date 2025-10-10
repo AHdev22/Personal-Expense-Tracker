@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "1ADjY4PCVOM=",
+  "dgSpecHash": "EKUG+hi9AgI=",
   "success": true,
-  "projectFilePath": "M:\\Personal Expense Tracker\\App\\App.csproj",
+  "projectFilePath": "M:\\Personal Expense Tracker\\Backend\\App\\App.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\admin\\.nuget\\packages\\bcrypt.net-next\\4.0.3\\bcrypt.net-next.4.0.3.nupkg.sha512",
     "C:\\Users\\admin\\.nuget\\packages\\humanizer.core\\2.14.1\\humanizer.core.2.14.1.nupkg.sha512",

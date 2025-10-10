@@ -1,15 +1,2 @@
-npx create-react-app app
-
-npm install axios react-router-dom
-axios → for API requests
-react-router-dom → for routing between login, register, and dashboard
-
-Folder Structure:
-src/
- ┣ components/
- ┃ ┣ Login.js
- ┃ ┣ Register.js
- ┃ ┣ Dashboard.js
- ┃ ┗ TransactionForm.js
- ┣ api/
- ┃ ┗ axiosConfig.js
+npx create-next-app@latest app
+npm install axios react-hook-form

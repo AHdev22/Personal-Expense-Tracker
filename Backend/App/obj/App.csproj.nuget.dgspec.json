@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "M:\\Personal Expense Tracker\\App\\App.csproj": {}
+    "M:\\Personal Expense Tracker\\Backend\\App\\App.csproj": {}
   },
   "projects": {
-    "M:\\Personal Expense Tracker\\App\\App.csproj": {
+    "M:\\Personal Expense Tracker\\Backend\\App\\App.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "M:\\Personal Expense Tracker\\App\\App.csproj",
+        "projectUniqueName": "M:\\Personal Expense Tracker\\Backend\\App\\App.csproj",
         "projectName": "App",
-        "projectPath": "M:\\Personal Expense Tracker\\App\\App.csproj",
+        "projectPath": "M:\\Personal Expense Tracker\\Backend\\App\\App.csproj",
         "packagesPath": "C:\\Users\\admin\\.nuget\\packages\\",
-        "outputPath": "M:\\Personal Expense Tracker\\App\\obj\\",
+        "outputPath": "M:\\Personal Expense Tracker\\Backend\\App\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
