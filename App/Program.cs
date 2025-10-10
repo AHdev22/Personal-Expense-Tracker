@@ -2,6 +2,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using App.Services;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -45,6 +47,10 @@ builder.Services.AddDbContext<App.Data.AppContext>(options =>
 //Apply swagger
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+// Register TokenService for dependency injection
+builder.Services.AddScoped<TokenService>();
+
 
 var app = builder.Build();
 
