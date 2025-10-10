@@ -20,14 +20,15 @@ namespace App.Services
         public string GenerateToken(Users user)
         {
             var jwtSettings = _config.GetSection("Jwt");
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings["Key"] ?? throw new Exception("JWT Key is missing")));
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(
+                jwtSettings["Key"] ?? throw new Exception("JWT Key is missing")));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
             var claims = new[]
             {
-                new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
-                new Claim(JwtRegisteredClaimNames.Email, user.Email),
-                new Claim("Name", user.Name)
+                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+                new Claim(ClaimTypes.Email, user.Email),
+                new Claim(ClaimTypes.Name, user.Name)
             };
 
             var token = new JwtSecurityToken(
@@ -40,5 +41,6 @@ namespace App.Services
 
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
+
     }
 }

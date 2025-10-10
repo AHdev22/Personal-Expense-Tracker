@@ -6,6 +6,10 @@ using App.Services;
 using BCrypt.Net;
 using Microsoft.EntityFrameworkCore;
 using APP.DTOs;
+using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
+using System.IdentityModel.Tokens.Jwt;
+
 
 namespace App.Controllers
 {
@@ -64,6 +68,28 @@ namespace App.Controllers
                 Token = token,
                 Name = user.Name,
                 Email = user.Email
+            });
+        }
+
+
+        [Authorize]
+        [HttpGet("me")]
+        public async Task<IActionResult> GetCurrentUser()
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)
+                        ?? User.FindFirstValue(JwtRegisteredClaimNames.Sub);
+
+            if (userId == null) return Unauthorized();
+
+            var user = await _context.Users.FindAsync(int.Parse(userId));
+            if (user == null) return NotFound();
+
+            return Ok(new
+            {
+                user.Id,
+                user.Name,
+                user.Email,
+                user.CreatedAt
             });
         }
     }
