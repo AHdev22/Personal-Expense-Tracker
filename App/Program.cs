@@ -4,15 +4,20 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using App.Services;
 
-
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
+// ----------------------------------------------------
+// 🔹 Add services to the container
+// ----------------------------------------------------
 builder.Services.AddOpenApi();
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
+builder.Services.AddAuthorization();
+builder.Services.AddControllers();
 
-
-// Configure JWT authentication
+// ----------------------------------------------------
+// 🔹 Configure JWT authentication
+// ----------------------------------------------------
 var jwtSettings = builder.Configuration.GetSection("Jwt");
 var key = Encoding.ASCII.GetBytes(jwtSettings["Key"] ?? throw new Exception("JWT Key is missing"));
 
@@ -27,15 +32,19 @@ builder.Services.AddAuthentication(options =>
     {
         ValidateIssuer = true,
         ValidateAudience = true,
+        ValidateLifetime = true,
         ValidateIssuerSigningKey = true,
         ValidIssuer = jwtSettings["Issuer"],
         ValidAudience = jwtSettings["Audience"],
-        IssuerSigningKey = new SymmetricSecurityKey(key)
+        IssuerSigningKey = new SymmetricSecurityKey(
+        Encoding.UTF8.GetBytes(jwtSettings["Key"] ?? throw new Exception("JWT Key is missing"))
+    )
     };
 });
 
-
-// MySQL connection string
+// ----------------------------------------------------
+// 🔹 Configure MySQL database connection
+// ----------------------------------------------------
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 
 builder.Services.AddDbContext<App.Data.AppContext>(options =>
@@ -44,54 +53,39 @@ builder.Services.AddDbContext<App.Data.AppContext>(options =>
         ServerVersion.AutoDetect(builder.Configuration.GetConnectionString("DefaultConnection"))
     ));
 
-//Apply swagger
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddDbContext<App.Data.AppContext>();
 
-// Register TokenService for dependency injection
+// ----------------------------------------------------
+// 🔹 Register application services
+// ----------------------------------------------------
 builder.Services.AddScoped<TokenService>();
 
-
+// ----------------------------------------------------
+// 🔹 Build the app
+// ----------------------------------------------------
 var app = builder.Build();
 
-// Enable authentication middleware
+// ----------------------------------------------------
+// 🔹 Middleware pipeline
+// ----------------------------------------------------
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseHttpsRedirection();
 
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
-
-    //Apply swagger
     app.UseSwagger();
     app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
+// ----------------------------------------------------
+// 🔹 Map controllers
+app.MapControllers();
 
-var summaries = new[]
-{
-    "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-};
-
-app.MapGet("/weatherforecast", () =>
-{
-    var forecast = Enumerable.Range(1, 5).Select(index =>
-        new WeatherForecast
-        (
-            DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-            Random.Shared.Next(-20, 55),
-            summaries[Random.Shared.Next(summaries.Length)]
-        ))
-        .ToArray();
-    return forecast;
-})
-.WithName("GetWeatherForecast");
-
+// ----------------------------------------------------
+// 🔹 Run the app
+// ----------------------------------------------------
 app.Run();
 
-record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
-{
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
-}
+
