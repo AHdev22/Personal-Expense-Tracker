@@ -1,0 +1,54 @@
+dotnet new webapi 
+
+EF Packages:
+dotnet add package Microsoft.EntityFrameworkCore
+dotnet add package Pomelo.EntityFrameworkCore.MySql
+dotnet add package Microsoft.EntityFrameworkCore.Tools
+
+JWT:
+dotnet add package Microsoft.AspNetCore.Authentication.JwtBearer
+dotnet add package System.IdentityModel.Tokens.Jwt
+
+Hashing Password Library:
+dotnet add package BCrypt.Net-Next
+
+Database:
+dotnet ef migrations add InitialCreate
+dotnet ef database update
+
+program.cs: 
+	var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+
+	builder.Services.AddDbContext<App.Data.AppContext>(options =>
+    		options.UseMySql(
+       	 	builder.Configuration.GetConnectionString("DefaultConnection"),
+        		ServerVersion.AutoDetect(builder.Configuration.GetConnectionString("DefaultConnection"))
+   		 ));
+
+application.json:
+    "ConnectionStrings": {
+        "DefaultConnection": "server=localhost;port=3306;database=dbNaem;user=UserName;password=Password"
+    },
+
+
+Swagger:
+program.cs:
+
+	builder.Services.AddEndpointsApiExplorer();
+	builder.Services.AddSwaggerGen();
+	if (app.Environment.IsDevelopment()){
+		app.UseSwagger();
+    		app.UseSwaggerUI();
+		}
+
+
+
+Folder Structure:
+APP/
+ ├─ Controllers/
+ ├─ Data/
+ ├─ DTOs/
+ ├─ Models/
+ ├─ Services/
+ ├─ Program.cs
+ └─ appsettings.json
