@@ -79,6 +79,7 @@ namespace App.Controllers
             transaction.Amount = updated.Amount;
             transaction.Type = updated.Type;
             transaction.Date = updated.Date;
+            transaction.Method = updated.Method;
 
             await _context.SaveChangesAsync();
             return Ok(transaction);

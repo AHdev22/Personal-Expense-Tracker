@@ -13,6 +13,7 @@ type Transaction = {
     amount: number;
     type: "income" | "expense";
     date: string;
+    method: string;
 };
 type Summary = { income: number; expense: number; balance: number };
 
@@ -251,6 +252,7 @@ export default function Dashboard() {
                                         <th className="p-3">#</th>
                                         <th className="p-3">Title</th>
                                         <th className="p-3">Category</th>
+                                        <th className="p-3">Method</th>
                                         <th className="p-3">Type</th>
                                         <th className="p-3">Amount</th>
                                         <th className="p-3">Date</th>
@@ -283,6 +285,9 @@ export default function Dashboard() {
                                                 </td>
                                                 <td className="p-3 text-gray-400">
                                                     {t.category}
+                                                </td>
+                                                <td className="p-3 text-gray-400">
+                                                    {t.method}
                                                 </td>
                                                 <td
                                                     className={`p-3 font-medium ${

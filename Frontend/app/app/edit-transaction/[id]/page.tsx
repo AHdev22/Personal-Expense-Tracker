@@ -12,6 +12,7 @@ type TransactionForm = {
     amount: number;
     type: "income" | "expense";
     date: string;
+    method: string;
 };
 
 export default function EditTransaction() {
@@ -43,6 +44,7 @@ export default function EditTransaction() {
                     amount: t.amount,
                     type: t.type,
                     date: t.date.slice(0, 10),
+                    method: t.method,
                 });
             } catch {
                 setServerError("Failed to load transaction data");
@@ -64,6 +66,7 @@ export default function EditTransaction() {
                 amount: parseFloat(data.amount.toString()),
                 type: data.type,
                 date: data.date,
+                method: data.method.trim(),
             });
 
             router.push("/");
@@ -159,6 +162,33 @@ export default function EditTransaction() {
                             {errors.category && (
                                 <p className="text-red-500 text-xs mt-1">
                                     {errors.category.message}
+                                </p>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Method */}
+                    <div>
+                        <label
+                            htmlFor="method"
+                            className="block text-sm font-medium text-gray-100"
+                        >
+                            Method
+                        </label>
+                        <div className="mt-2">
+                            <input
+                                id="method"
+                                type="text"
+                                {...register("method", {
+                                    required: "Method is required",
+                                })}
+                                className="block w-full rounded-md bg-white/5 px-3 py-1.5 text-white 
+                                outline-1 -outline-offset-1 outline-white/10 placeholder:text-gray-500 
+                                focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-500 sm:text-sm"
+                            />
+                            {errors.method && (
+                                <p className="text-red-500 text-xs mt-1">
+                                    {errors.method.message}
                                 </p>
                             )}
                         </div>
