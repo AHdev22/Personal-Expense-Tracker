@@ -28,6 +28,8 @@ export default function Dashboard() {
     const [type, setType] = useState("");
     const [from, setFrom] = useState("");
     const [to, setTo] = useState("");
+    const [showModal, setShowModal] = useState(false);
+    const [deleteId, setDeleteId] = useState<number | null>(null);
 
     const handleError = useCallback((error: unknown) => {
         if (error instanceof AxiosError) {
@@ -80,14 +82,24 @@ export default function Dashboard() {
     const handleAdd = () => router.push("/add-transaction");
     const handleEdit = (id: number) => router.push(`/edit-transaction/${id}`);
 
-    const handleDelete = async (id: number) => {
-        if (!confirm("Are you sure you want to delete this transaction?"))
-            return;
+    const handleDelete = async () => {
+        if (!deleteId) return;
+
         try {
-            await api.delete(`/Transactions/${id}`);
-            setTransactions((prev) => prev.filter((t) => t.id !== id));
+            // Delete transaction from backend
+            await api.delete(`/Transactions/${deleteId}`);
+
+            // Update local state (remove deleted transaction)
+            setTransactions((prev) => prev.filter((t) => t.id !== deleteId));
+
+            // Optionally re-fetch data to ensure totals are up-to-date (recommended)
+            await loadAllData?.();
         } catch (error) {
             handleError(error);
+        } finally {
+            // Close the modal and reset delete ID
+            setShowModal(false);
+            setDeleteId(null);
         }
     };
 
@@ -119,7 +131,7 @@ export default function Dashboard() {
                 </div>
             </header>
 
-            <main className="flex-1 max-w-6xl mx-auto p-6">
+            <main className="flex-1 min-w-6xl  mx-auto p-6">
                 {loading && (
                     <p className="text-center text-indigo-400 mt-6">
                         Loading...
@@ -163,41 +175,56 @@ export default function Dashboard() {
                         </div>
 
                         {/* Filter Controls */}
-                        <div className="bg-white/5 border border-white/10 rounded-lg p-4 mb-6 flex flex-wrap gap-4 items-end">
+                        <div className="bg-white/5 border border-white/10 rounded-lg p-4 mb-6 flex flex-wrap gap-4 items-end justify-around">
                             <div>
-                                <label className="text-gray-300 text-sm">
+                                <label className="text-gray-300 text-sm mr-4">
                                     Type
                                 </label>
                                 <select
                                     value={type}
                                     onChange={(e) => setType(e.target.value)}
-                                    className="w-40 bg-white/10 text-white border border-white/10 rounded-md px-3 py-2 text-sm focus:outline-2 focus:outline-indigo-500"
+                                    className="w-40 bg-white/10 text-white border border-white/10 rounded-md px-3 py-2 text-sm focus:outline-2 focus:outline-indigo-500 cursor-pointer"
                                 >
-                                    <option value="">All</option>
-                                    <option value="income">Income</option>
-                                    <option value="expense">Expense</option>
+                                    <option
+                                        value=""
+                                        className="text-black cursor-pointer"
+                                    >
+                                        All
+                                    </option>
+                                    <option
+                                        value="income"
+                                        className="text-black cursor-pointer"
+                                    >
+                                        Income
+                                    </option>
+                                    <option
+                                        value="expense"
+                                        className="text-black cursor-pointer"
+                                    >
+                                        Expense
+                                    </option>
                                 </select>
                             </div>
                             <div>
-                                <label className="text-gray-300 text-sm">
+                                <label className="text-gray-300 text-sm mr-4">
                                     From
                                 </label>
                                 <input
                                     type="date"
                                     value={from}
                                     onChange={(e) => setFrom(e.target.value)}
-                                    className="bg-white/10 text-white border border-white/10 rounded-md px-3 py-2 text-sm focus:outline-2 focus:outline-indigo-500"
+                                    className="bg-white/10 text-white border border-white/10 rounded-md px-3 py-2 text-sm focus:outline-2 focus:outline-indigo-500 cursor-pointer"
                                 />
                             </div>
                             <div>
-                                <label className="text-gray-300 text-sm">
+                                <label className="text-gray-300 text-sm mr-4">
                                     To
                                 </label>
                                 <input
                                     type="date"
                                     value={to}
                                     onChange={(e) => setTo(e.target.value)}
-                                    className="bg-white/10 text-white border border-white/10 rounded-md px-3 py-2 text-sm focus:outline-2 focus:outline-indigo-500"
+                                    className="bg-white/10 text-white border border-white/10 rounded-md px-3 py-2 text-sm focus:outline-2 focus:outline-indigo-500 cursor-pointer"
                                 />
                             </div>
                             <button
@@ -279,14 +306,15 @@ export default function Dashboard() {
                                                         onClick={() =>
                                                             handleEdit(t.id)
                                                         }
-                                                        className="bg-indigo-600 text-white px-3 py-1 rounded text-sm hover:bg-indigo-500 cursor-pointer"
+                                                        className="bg-indigo-600 text-white px-3 py-1 rounded text-sm hover:bg-indigo-500 cursor-pointer mr-3"
                                                     >
                                                         Edit
                                                     </button>
                                                     <button
-                                                        onClick={() =>
-                                                            handleDelete(t.id)
-                                                        }
+                                                        onClick={() => {
+                                                            setDeleteId(t.id);
+                                                            setShowModal(true);
+                                                        }}
                                                         className="bg-red-600 text-white px-3 py-1 rounded text-sm hover:bg-red-500 cursor-pointer"
                                                     >
                                                         Delete
@@ -299,6 +327,35 @@ export default function Dashboard() {
                             </table>
                         </div>
                     </>
+                )}
+                {showModal && (
+                    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
+                        <div className="bg-gray-800 border border-white/10 rounded-lg p-6 w-96 text-center shadow-lg ">
+                            <h2 className="text-lg font-semibold text-white mb-4">
+                                Delete Transaction?
+                            </h2>
+                            <p className="text-gray-400 text-sm mb-6">
+                                Are you sure you want to delete this
+                            </p>
+                            <div className="flex justify-center gap-4">
+                                <button
+                                    onClick={handleDelete}
+                                    className="bg-red-600 hover:bg-red-700 px-4 py-2 rounded text-white text-sm cursor-pointer"
+                                >
+                                    Delete
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        setShowModal(false);
+                                        setDeleteId(null);
+                                    }}
+                                    className="bg-gray-600 hover:bg-gray-500 px-4 py-2 rounded text-white text-sm cursor-pointer"
+                                >
+                                    Cancel
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                 )}
             </main>
         </div>

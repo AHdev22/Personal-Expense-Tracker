@@ -1,10 +1,10 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { useRouter, useParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { AxiosError } from "axios";
 import api from "@/lib/api";
-import { useState } from "react";
 
 type TransactionForm = {
     title: string;
@@ -14,37 +14,58 @@ type TransactionForm = {
     date: string;
 };
 
-export default function AddTransaction() {
+export default function EditTransaction() {
     const router = useRouter();
+    const params = useParams();
+    const id = params?.id as string;
+
     const [serverError, setServerError] = useState("");
+    const [loading, setLoading] = useState(true);
+
     const {
         register,
         handleSubmit,
         formState: { errors, isSubmitting },
         reset,
-    } = useForm<TransactionForm>({
-        defaultValues: {
-            title: "",
-            category: "",
-            amount: 0,
-            type: "income",
-            date: "",
-        },
-    });
+    } = useForm<TransactionForm>();
 
+    // Load existing transaction
+    useEffect(() => {
+        if (!id) return;
+
+        const fetchTransaction = async () => {
+            try {
+                const res = await api.get(`/Transactions/${id}`);
+                const t = res.data;
+                reset({
+                    title: t.title,
+                    category: t.category,
+                    amount: t.amount,
+                    type: t.type,
+                    date: t.date.slice(0, 10),
+                });
+            } catch {
+                setServerError("Failed to load transaction data");
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchTransaction();
+    }, [id, reset]);
+
+    // Submit form
     const onSubmit = async (data: TransactionForm) => {
         setServerError("");
-
         try {
-            await api.post("/Transactions", {
+            await api.put(`/Transactions/${id}`, {
                 title: data.title.trim(),
                 category: data.category.trim(),
                 amount: parseFloat(data.amount.toString()),
                 type: data.type,
-                date: data.date || new Date().toISOString(),
+                date: data.date,
             });
 
-            reset();
             router.push("/");
         } catch (error) {
             if (error instanceof AxiosError) {
@@ -52,7 +73,7 @@ export default function AddTransaction() {
                     typeof error.response?.data === "string"
                         ? error.response.data
                         : error.response?.data?.message ||
-                          "Failed to add transaction";
+                          "Failed to update transaction";
                 setServerError(message);
             } else {
                 setServerError("Unexpected error occurred. Please try again.");
@@ -60,11 +81,18 @@ export default function AddTransaction() {
         }
     };
 
+    if (loading)
+        return (
+            <p className="text-center text-indigo-600 mt-10 font-medium">
+                Loading transaction...
+            </p>
+        );
+
     return (
         <div className="flex min-h-full flex-col justify-center px-6 py-12 lg:px-8 bg-gray-900">
             <div className="sm:mx-auto sm:w-full sm:max-w-sm">
                 <h2 className="mt-10 text-center text-2xl font-bold tracking-tight text-white">
-                    Add New Transaction
+                    Edit Transaction
                 </h2>
             </div>
 
@@ -97,7 +125,6 @@ export default function AddTransaction() {
                                             "Title must be at least 3 characters",
                                     },
                                 })}
-                                placeholder="e.g. Grocery Shopping"
                                 className="block w-full rounded-md bg-white/5 px-3 py-1.5 text-white 
                                 outline-1 -outline-offset-1 outline-white/10 placeholder:text-gray-500 
                                 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-500 sm:text-sm"
@@ -125,7 +152,6 @@ export default function AddTransaction() {
                                 {...register("category", {
                                     required: "Category is required",
                                 })}
-                                placeholder="e.g. Food, Rent, Salary"
                                 className="block w-full rounded-md bg-white/5 px-3 py-1.5 text-white 
                                 outline-1 -outline-offset-1 outline-white/10 placeholder:text-gray-500 
                                 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-500 sm:text-sm"
@@ -191,7 +217,6 @@ export default function AddTransaction() {
                                             "Amount must be greater than 0",
                                     },
                                 })}
-                                placeholder="e.g. 150.00"
                                 className="block w-full rounded-md bg-white/5 px-3 py-1.5 text-white 
                                 outline-1 -outline-offset-1 outline-white/10 placeholder:text-gray-500 
                                 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-500 sm:text-sm"
@@ -240,7 +265,7 @@ export default function AddTransaction() {
                             text-sm font-semibold text-white hover:bg-indigo-400
                             focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
                         >
-                            {isSubmitting ? "Adding..." : "Add Transaction"}
+                            {isSubmitting ? "Saving..." : "Save Changes"}
                         </button>
                     </div>
                 </form>

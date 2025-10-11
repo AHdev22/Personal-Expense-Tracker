@@ -52,6 +52,20 @@ namespace App.Controllers
 
             return Ok(transaction);
         }
+        // 🔹 Get single transaction by ID
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetTransactionById(int id)
+        {
+            var userId = GetUserId();
+            var transaction = await _context.Transactions
+                .FirstOrDefaultAsync(t => t.Id == id && t.UserId == userId);
+
+            if (transaction == null)
+                return NotFound(new { message = "Transaction not found" });
+
+            return Ok(transaction);
+        }
+
 
         // 🔹 Update transaction
         [HttpPut("{id}")]
