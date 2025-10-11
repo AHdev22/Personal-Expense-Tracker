@@ -26,52 +26,103 @@ namespace App.Controllers
             _tokenService = tokenService;
         }
 
+        // ================== REGISTER ==================
         [HttpPost("register")]
         public async Task<IActionResult> Register(RegisterRequest request)
         {
-            if (await _context.Users.AnyAsync(u => u.Email == request.Email))
-                return BadRequest("Email already registered.");
-
-            var user = new Users
+            try
             {
-                Name = request.Name,
-                Email = request.Email,
-                PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.PasswordHash)
-            };
+                // ✅ 1. Check for existing email
+                if (await _context.Users.AnyAsync(u => u.Email == request.Email))
+                    return BadRequest(new { message = "Email already registered." });
 
-            _context.Users.Add(user);
-            await _context.SaveChangesAsync();
+                // ✅ 2. Create new user
+                var user = new Users
+                {
+                    Name = request.Name,
+                    Email = request.Email,
+                    Password = BCrypt.Net.BCrypt.HashPassword(request.Password) // use PasswordHash now
+                };
 
-            var token = _tokenService.GenerateToken(user);
+                _context.Users.Add(user);
+                await _context.SaveChangesAsync();
 
-            return Ok(new AuthResponse
+                // ✅ 3. Generate JWT token
+                var token = _tokenService.GenerateToken(user);
+
+                // ✅ 4. Return success
+                return Ok(new AuthResponse
+                {
+                    Token = token,
+                    Name = user.Name,
+                    Email = user.Email
+                });
+            }
+            catch (DbUpdateException dbEx)
             {
-                Token = token,
-                Name = user.Name,
-                Email = user.Email
-            });
+                Console.WriteLine($"[DB ERROR] {dbEx}");
+                return StatusCode(500, new { message = "Database operation failed. Please try again later." });
+            }
+            catch (InvalidOperationException invEx)
+            {
+                Console.WriteLine($"[INVALID OPERATION] {invEx}");
+                return StatusCode(500, new { message = "An internal operation failed. Contact support." });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[UNEXPECTED ERROR] {ex}");
+                return StatusCode(500, new { message = "Unexpected server error. Please try again later." });
+            }
         }
 
-        [AllowAnonymous] // IMPORTANT
+        // ================== LOGIN ==================
+        [AllowAnonymous]
         [HttpPost("login")]
         public async Task<IActionResult> Login(LoginRequest request)
         {
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == request.Email);
-            if (user == null) return Unauthorized("Invalid email or password.");
-
-            bool isPasswordValid = BCrypt.Net.BCrypt.Verify(request.PasswordHash, user.PasswordHash);
-            if (!isPasswordValid) return Unauthorized("Invalid email or password.");
-
-            var token = _tokenService.GenerateToken(user);
-
-            return Ok(new AuthResponse
+            try
             {
-                Token = token,
-                Name = user.Name,
-                Email = user.Email
-            });
+                // ✅ 1. Validate required fields (just sanity check)
+                if (string.IsNullOrWhiteSpace(request.Email) || string.IsNullOrWhiteSpace(request.Password))
+                    return BadRequest(new { message = "Email and password are required." });
+
+                // ✅ 2. Find user
+                var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == request.Email);
+                if (user == null)
+                    return Unauthorized(new { message = "Invalid email or password." });
+
+                // ✅ 3. Validate password
+                bool isPasswordValid = BCrypt.Net.BCrypt.Verify(request.Password, user.Password);
+                if (!isPasswordValid)
+                    return Unauthorized(new { message = "Invalid email or password." });
+
+                // ✅ 4. Generate token
+                var token = _tokenService.GenerateToken(user);
+
+                return Ok(new AuthResponse
+                {
+                    Token = token,
+                    Name = user.Name,
+                    Email = user.Email
+                });
+            }
+            catch (DbUpdateException dbEx)
+            {
+                Console.WriteLine($"[DB ERROR] {dbEx}");
+                return StatusCode(500, new { message = "Database operation failed. Please try again later." });
+            }
+            catch (InvalidOperationException invEx)
+            {
+                Console.WriteLine($"[INVALID OPERATION] {invEx}");
+                return StatusCode(500, new { message = "An internal operation failed. Contact support." });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[UNEXPECTED ERROR] {ex}");
+                return StatusCode(500, new { message = "Unexpected server error. Please try again later." });
+            }
         }
-    
+
         [Authorize]
         [HttpGet("me")]
         public async Task<IActionResult> GetCurrentUser()
