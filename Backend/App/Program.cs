@@ -45,6 +45,18 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
+builder.Services.AddCors(options =>
+{
+    options.AddDefaultPolicy(policy =>
+    {
+        policy.WithOrigins("http://localhost:3000")
+            .AllowAnyHeader()
+            .AllowAnyMethod();
+    });
+});
+
+
+
 builder.Services.AddAuthorization();
 builder.Services.AddControllers();
 
@@ -96,7 +108,7 @@ var app = builder.Build();
 // 🔹 Middleware pipeline (✅ correct order)
 // ----------------------------------------------------
 app.UseHttpsRedirection();
-
+app.UseCors();
 app.UseRouting();                // ✅ Add this before authentication
 
 app.UseAuthentication();         // ✅ Must be before Authorization

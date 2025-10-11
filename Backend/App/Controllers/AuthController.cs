@@ -52,6 +52,7 @@ namespace App.Controllers
             });
         }
 
+        [AllowAnonymous] // IMPORTANT
         [HttpPost("login")]
         public async Task<IActionResult> Login(LoginRequest request)
         {
@@ -70,8 +71,7 @@ namespace App.Controllers
                 Email = user.Email
             });
         }
-
-
+    
         [Authorize]
         [HttpGet("me")]
         public async Task<IActionResult> GetCurrentUser()
