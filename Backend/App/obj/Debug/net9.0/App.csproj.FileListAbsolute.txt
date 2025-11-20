@@ -195,7 +195,6 @@ M:\Personal Expense Tracker\Backend\App\bin\Debug\net9.0\System.Composition.Host
 M:\Personal Expense Tracker\Backend\App\bin\Debug\net9.0\System.Composition.Runtime.dll
 M:\Personal Expense Tracker\Backend\App\bin\Debug\net9.0\System.Composition.TypedParts.dll
 M:\Personal Expense Tracker\Backend\App\bin\Debug\net9.0\System.IdentityModel.Tokens.Jwt.dll
-M:\Personal Expense Tracker\Backend\App\bin\Debug\net9.0\System.Text.Json.dll
 M:\Personal Expense Tracker\Backend\App\bin\Debug\net9.0\cs\Microsoft.CodeAnalysis.resources.dll
 M:\Personal Expense Tracker\Backend\App\bin\Debug\net9.0\de\Microsoft.CodeAnalysis.resources.dll
 M:\Personal Expense Tracker\Backend\App\bin\Debug\net9.0\es\Microsoft.CodeAnalysis.resources.dll
@@ -284,3 +283,4 @@ M:\Personal Expense Tracker\Backend\App\obj\Debug\net9.0\refint\App.dll
 M:\Personal Expense Tracker\Backend\App\obj\Debug\net9.0\App.pdb
 M:\Personal Expense Tracker\Backend\App\obj\Debug\net9.0\App.genruntimeconfig.cache
 M:\Personal Expense Tracker\Backend\App\obj\Debug\net9.0\ref\App.dll
+M:\Personal Expense Tracker\Backend\App\obj\Debug\net9.0\swae.build.ex.cache

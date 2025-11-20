@@ -98,18 +98,30 @@ namespace App.Controllers
             return Ok(new { message = "Transaction deleted successfully" });
         }
 
-        // 🔹 Get summary totals (Income, Expense, Balance)
+        // FIX 1: Update Summary to accept Date Range
         [HttpGet("summary")]
-        public async Task<IActionResult> GetSummary()
+        public async Task<IActionResult> GetSummary(DateTime? from, DateTime? to)
         {
             var userId = GetUserId();
 
-            var income = await _context.Transactions
-                .Where(t => t.UserId == userId && t.Type == "Income")
+            // Base query with User ID
+            var query = _context.Transactions.Where(t => t.UserId == userId);
+
+            // Apply Date Filters to the base query
+            if (from.HasValue)
+                query = query.Where(t => t.Date >= from.Value);
+
+            if (to.HasValue)
+                // specific logic to include the whole end day
+                query = query.Where(t => t.Date <= to.Value.Date.AddDays(1).AddTicks(-1));
+
+            // Calculate aggregates based on the filtered time range
+            var income = await query
+                .Where(t => t.Type == "Income")
                 .SumAsync(t => (decimal?)t.Amount) ?? 0;
 
-            var expense = await _context.Transactions
-                .Where(t => t.UserId == userId && t.Type == "Expense")
+            var expense = await query
+                .Where(t => t.Type == "Expense")
                 .SumAsync(t => (decimal?)t.Amount) ?? 0;
 
             var balance = income - expense;
@@ -127,11 +139,14 @@ namespace App.Controllers
         public async Task<IActionResult> FilterTransactions(string? type, DateTime? from, DateTime? to)
         {
             var userId = GetUserId();
-
             var query = _context.Transactions.Where(t => t.UserId == userId);
 
             if (!string.IsNullOrEmpty(type))
-                query = query.Where(t => t.Type == type);
+            {
+                // Fix: Use ToLower() for comparison to handle "Expense" vs "expense"
+                var typeLower = type.ToLower();
+                query = query.Where(t => t.Type.ToLower() == typeLower);
+            }
 
             if (from.HasValue)
                 query = query.Where(t => t.Date >= from.Value);
@@ -143,6 +158,5 @@ namespace App.Controllers
 
             return Ok(results);
         }
-
     }
 }

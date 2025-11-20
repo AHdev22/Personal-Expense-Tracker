@@ -7,18 +7,29 @@ using App.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// ----------------------------------------------------
-// 🔹 Add services to the container
-// ----------------------------------------------------
-builder.Services.AddOpenApi();
+// ============================================================================
+// KESTREL SETTINGS — allow API to be reached from network / Flutter / web
+// ============================================================================
+builder.WebHost.ConfigureKestrel(options =>
+{
+    // This makes the API reachable on http://<YourLocalIP>:5291
+    options.ListenAnyIP(5291);
+});
+
+// ============================================================================
+// SERVICES
+// ============================================================================
+builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 
-// ✅ Swagger configuration with JWT support
+// ----------------------------------------------------------------------------
+// Swagger (API Documentation + JWT Support)
+// ----------------------------------------------------------------------------
 builder.Services.AddSwaggerGen(c =>
 {
-    c.SwaggerDoc("v1", new() { Title = "App", Version = "v1" });
+    c.SwaggerDoc("v1", new() { Title = "App API", Version = "v1" });
 
-    // 🔒 Add JWT Authorization to Swagger
+    // JWT input field in Swagger
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
         Name = "Authorization",
@@ -26,7 +37,7 @@ builder.Services.AddSwaggerGen(c =>
         Scheme = "Bearer",
         BearerFormat = "JWT",
         In = ParameterLocation.Header,
-        Description = "Enter your JWT token in this format: Bearer {your token here}"
+        Description = "Enter JWT token: Bearer {your token}"
     });
 
     c.AddSecurityRequirement(new OpenApiSecurityRequirement
@@ -45,26 +56,26 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
+// ============================================================================
+// CORS SETTINGS — This was the main issue causing "Failed to fetch"
+// ============================================================================
 builder.Services.AddCors(options =>
 {
-    options.AddDefaultPolicy(policy =>
+    options.AddPolicy("AllowAll", policy =>
     {
-        policy.WithOrigins("http://localhost:3000")
-            .AllowAnyHeader()
-            .AllowAnyMethod();
+        policy
+            .AllowAnyOrigin()        // Allow all domains
+            .AllowAnyMethod()        // GET, POST, PUT, DELETE, OPTIONS
+            .AllowAnyHeader()        // Allow all headers
+            .WithExposedHeaders("*"); // Let browser read custom headers
     });
 });
 
-
-
-builder.Services.AddAuthorization();
-builder.Services.AddControllers();
-
-// ----------------------------------------------------
-// 🔹 Configure JWT authentication
-// ----------------------------------------------------
+// ============================================================================
+// JWT Authentication
+// ============================================================================
 var jwtSettings = builder.Configuration.GetSection("Jwt");
-var key = Encoding.UTF8.GetBytes(jwtSettings["Key"] ?? throw new Exception("JWT Key is missing"));
+var key = Encoding.UTF8.GetBytes(jwtSettings["Key"] ?? throw new Exception("JWT Key missing"));
 
 builder.Services.AddAuthentication(options =>
 {
@@ -85,46 +96,72 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
-// ----------------------------------------------------
-// 🔹 Configure MySQL database connection
-// ----------------------------------------------------
+builder.Services.AddAuthorization();
+
+// ============================================================================
+// DATABASE
+// ============================================================================
 builder.Services.AddDbContext<App.Data.AppContext>(options =>
     options.UseMySql(
         builder.Configuration.GetConnectionString("DefaultConnection"),
         ServerVersion.AutoDetect(builder.Configuration.GetConnectionString("DefaultConnection"))
     ));
 
-// ----------------------------------------------------
-// 🔹 Register application services
-// ----------------------------------------------------
+// ============================================================================
+// APPLICATION SERVICES
+// ============================================================================
 builder.Services.AddScoped<TokenService>();
 
-// ----------------------------------------------------
-// 🔹 Build the app
-// ----------------------------------------------------
+// ============================================================================
+// BUILD APP
+// ============================================================================
 var app = builder.Build();
 
-// ----------------------------------------------------
-// 🔹 Middleware pipeline (✅ correct order)
-// ----------------------------------------------------
-app.UseHttpsRedirection();
-app.UseCors();
-app.UseRouting();                // ✅ Add this before authentication
+// ============================================================================
+// MIDDLEWARE — ORDER IS VERY IMPORTANT FOR CORS TO WORK
+// ============================================================================
 
-app.UseAuthentication();         // ✅ Must be before Authorization
+// -------------------------------
+// 1️⃣ Routing must come first
+// -------------------------------
+app.UseRouting();
+
+// -------------------------------
+// 2️⃣ CORS MUST be between UseRouting and UseAuthentication
+//    This fixes the preflight (OPTIONS) failure
+// -------------------------------
+app.UseCors("AllowAll");
+
+// -------------------------------
+// 3️⃣ Authentication + Authorization
+// -------------------------------
+app.UseAuthentication();
 app.UseAuthorization();
 
+// -------------------------------
+// 4️⃣ DO NOT force HTTPS during testing
+//    This causes Flutter/web to fail when backend is HTTP
+// -------------------------------
+// app.UseHttpsRedirection();
+
+// -------------------------------
+// Swagger (enabled in Development)
+// -------------------------------
 if (app.Environment.IsDevelopment())
 {
-    app.MapOpenApi();
     app.UseSwagger();
-    app.UseSwaggerUI();
+    app.UseSwaggerUI(c =>
+    {
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "App API v1");
+    });
 }
 
-// ✅ Map controllers inside routing
+// -------------------------------
+// 5️⃣ Map Controllers (final step)
+// -------------------------------
 app.MapControllers();
 
-// ----------------------------------------------------
-// 🔹 Run the app
-// ----------------------------------------------------
+// ============================================================================
+// RUN
+// ============================================================================
 app.Run();
